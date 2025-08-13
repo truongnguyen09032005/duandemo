@@ -12,25 +12,22 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'description',
-        'price',
-        'category_id',
-        'image',
-        'stock_quantity',
-        'status'
-        // Add other fillable fields as needed
+        'code', 'name', 'image', 'description', 
+        'metarial', 'instrut', 'status', 'category_id'
     ];
 
-    // Existing relationships
-    public function category(): BelongsTo
+    protected $casts = [
+        'status' => 'boolean',
+    ];
+
+    public function category()
     {
         return $this->belongsTo(Category::class);
     }
 
-    public function orderItems(): HasMany
+    public function productVariants()
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->hasMany(ProductVariant::class);
     }
 
     // New comment relationships

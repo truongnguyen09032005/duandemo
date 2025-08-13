@@ -4,97 +4,100 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Order;
 
 class OrderController extends Controller
 {
-    /**
-     * Hiển thị danh sách đơn hàng
-     */
-    public function index()
+    public function index(Request $request)
     {
-        // Lấy danh sách đơn hàng từ database
-        // $orders = Order::with(['user', 'orderItems'])->latest()->paginate(10);
-        
-        // Tạm thời return view với dữ liệu mẫu
-        $orders = collect([
-            (object)[
-                'id' => 1,
-                'customer_name' => 'Nguyễn Văn A',
-                'total' => 500000,
-                'status' => 'processing',
-                'payment_status' => 'paid',
-                'created_at' => now()
-            ]
-        ]);
+        $query = Order::with(['user', 'orderDetails.productVariant.product', 'orderDetails.productVariant.color', 'orderDetails.productVariant.size']);
+
+        // Xử lý tìm kiếm
+        if ($request->filled('keyword')) {
+            $keyword = $request->keyword;
+            
+            $query->where(function($q) use ($keyword) {
+                $q->where('id', 'like', "%{$keyword}%")
+                  ->orWhere('email', 'like', "%{$keyword}%")  
+                  ->orWhere('phone', 'like', "%{$keyword}%")
+                  ->orWhere('address', 'like', "%{$keyword}%")
+                  ->orWhereHas('user', function($userQuery) use ($keyword) {
+                      $userQuery->where('name', 'like', "%{$keyword}%");
+                  });
+            });
+        }
+
+        // Phân trang và giữ lại query parameters
+        $orders = $query->latest()->paginate(10)->appends($request->query());
         
         return view('admins.orders.index', compact('orders'));
     }
 
-    /**
-     * Hiển thị chi tiết đơn hàng
-     */
     public function show($order)
     {
-        // Tìm đơn hàng theo ID
-        // $order = Order::with(['user', 'orderItems.product'])->findOrFail($order);
-        
+        $order = Order::with([
+            'user',
+            'orderDetails.productVariant.product',
+            'orderDetails.productVariant.color',
+            'orderDetails.productVariant.size'
+        ])->findOrFail($order);
+
         return view('admins.orders.show', compact('order'));
     }
 
-    /**
-     * Cập nhật trạng thái đơn hàng
-     */
     public function updateStatus(Request $request, $order)
     {
+        // Debug để kiểm tra data nhận được
+        // dd($request->all());
+        
         $request->validate([
-            'status' => 'required|in:pending,processing,shipped,delivered,cancelled'
+            'status' => 'required|in:pending,confirmed,processing,shipping,delivered,cancelled,returned'
+        ], [
+            'status.required' => 'Trạng thái là bắt buộc.',
+            'status.in' => 'Trạng thái không hợp lệ.'
         ]);
 
-        // Tìm và cập nhật đơn hàng
-        // $order = Order::findOrFail($order);
-        // $order->status = $request->status;
-        // $order->save();
+        try {
+            $order = Order::findOrFail($order);
+            $order->status = $request->status;
+            $order->save();
 
-        return redirect()->route('admin.orders.index')->with('success', 'Cập nhật trạng thái đơn hàng thành công!');
+            return redirect()->back()->with('success', 'Cập nhật trạng thái đơn hàng thành công!');
+            
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        }
     }
 
-    /**
-     * Cập nhật trạng thái thanh toán
-     */
-    public function updatePaymentStatus(Request $request, $order)
+    public function updatePaymentStatus(Request $request, $orderId)
     {
         $request->validate([
             'payment_status' => 'required|in:pending,paid,refunded,failed'
+        ], [
+            'payment_status.required' => 'Trạng thái thanh toán là bắt buộc.',
+            'payment_status.in' => 'Trạng thái thanh toán không hợp lệ.'
         ]);
 
-        // Tìm và cập nhật trạng thái thanh toán
-        // $order = Order::findOrFail($order);
-        // $order->payment_status = $request->payment_status;
-        // $order->save();
-
-        return redirect()->route('admin.orders.index')->with('success', 'Cập nhật trạng thái thanh toán thành công!');
+        try {
+            $order = Order::findOrFail($orderId);
+            $order->payment_status = $request->payment_status;
+            $order->save();
+            
+            return redirect()->back()->with('success', 'Cập nhật trạng thái thanh toán thành công!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        }
     }
 
-    /**
-     * Xóa đơn hàng
-     */
     public function destroy($order)
     {
-        // Tìm và xóa đơn hàng
-        // $order = Order::findOrFail($order);
-        // $order->delete();
-
-        return redirect()->route('admin.orders.index')->with('success', 'Xóa đơn hàng thành công!');
-    }
-
-    /**
-     * Xuất file Excel danh sách đơn hàng
-     */
-    public function export()
-    {
-        // Logic xuất file Excel
-        // return Excel::download(new OrdersExport, 'orders.xlsx');
-        
-        return response()->json(['message' => 'Chức năng xuất file đang được phát triển']);
+        try {
+            $order = Order::findOrFail($order);
+            $order->delete();
+            
+            return redirect()->route('admin.orders.index')->with('success', 'Xóa đơn hàng thành công!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        }
     }
 }

@@ -50,7 +50,7 @@
 
                 {{-- Menu Bình luận với dropdown --}}
                 <li class="nav-item has-treeview">
-                    <a href="#" class="nav-link">
+                    <a href="admin.comments.index" class="nav-link">
                         <i class="nav-icon fas fa-comments"></i>
                         <p>
                             Quản lý Bình luận
@@ -98,6 +98,28 @@
                             </a>
                         </li>
                     </ul>
+                </li>
+                {{-- Menu Voucher --}}
+                <li class="nav-item">
+                    <a href="{{ route('admin.vouchers.index') }}" class="nav-link">
+                        <i class="nav-icon fas fa-ticket-alt"></i>
+                        <p>
+                            Voucher
+                            @php
+                                try {
+                                    $activeVouchersCount = \App\Models\Voucher::where('start_date', '<=', now())
+                                        ->where('end_date', '>=', now())
+                                        ->where('quantity', '>', 0)
+                                        ->count();
+                                } catch (\Exception $e) {
+                                    $activeVouchersCount = 0;
+                                }
+                            @endphp
+                            @if($activeVouchersCount > 0)
+                                <span class="badge badge-success right">{{ $activeVouchersCount }}</span>
+                            @endif
+                        </p>
+                    </a>
                 </li>
 
                 <li class="nav-item">

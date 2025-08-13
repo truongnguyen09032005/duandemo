@@ -2,67 +2,83 @@
 
 namespace Database\Seeders;
 
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Product;
-use App\Models\User;
-use App\Models\Variant;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\Order;
+use Carbon\Carbon;
 
 class OrderSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
-        // Tạo một số user để test
-        $users = User::factory(10)->create();
-        
-        // Tạo một số product để test nếu chưa có
-        if (Product::count() == 0) {
-            $products = Product::factory(20)->create();
-            
-            // Tạo variants cho mỗi product
-            $products->each(function ($product) {
-                Variant::factory(3)->create(['product_id' => $product->id]);
-            });
+        $orders = [
+            [
+                'khach_hang' => 'Nguyễn Văn Nam',
+                'email' => 'nguyenvannam@gmail.com',
+                'so_dien_thoai' => '0123456789',
+                'dia_chi' => '123 Đường ABC, Quận 1, TP.HCM',
+                'tong_tien' => 450000,
+                'thanh_toan' => 'paid',
+                'trang_thai' => 'completed',
+                'ngay_tao' => Carbon::now()->subDays(5),
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'khach_hang' => 'Trần Thị Hoa',
+                'email' => 'tranthihoa@gmail.com',
+                'so_dien_thoai' => '0987654321',
+                'dia_chi' => '456 Đường XYZ, Quận 3, Hà Nội',
+                'tong_tien' => 680000,
+                'thanh_toan' => 'pending',
+                'trang_thai' => 'processing',
+                'ngay_tao' => Carbon::now()->subDays(2),
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'khach_hang' => 'Lê Văn Đức',
+                'email' => 'levanduc@gmail.com',
+                'so_dien_thoai' => '0369852147',
+                'dia_chi' => '789 Đường DEF, Quận 7, TP.HCM',
+                'tong_tien' => 320000,
+                'thanh_toan' => 'paid',
+                'trang_thai' => 'shipping',
+                'ngay_tao' => Carbon::now()->subDays(1),
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'khach_hang' => 'Phạm Thị Lan',
+                'email' => 'phamthilan@gmail.com',
+                'so_dien_thoai' => '0741852963',
+                'dia_chi' => '321 Đường GHI, Quận 5, Đà Nẵng',
+                'tong_tien' => 890000,
+                'thanh_toan' => 'paid',
+                'trang_thai' => 'completed',
+                'ngay_tao' => Carbon::now()->subHours(12),
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'khach_hang' => 'Võ Văn Minh',
+                'email' => 'vovanminh@gmail.com',
+                'so_dien_thoai' => '0258147963',
+                'dia_chi' => '654 Đường JKL, Quận 2, TP.HCM',
+                'tong_tien' => 150000,
+                'thanh_toan' => 'pending',
+                'trang_thai' => 'pending',
+                'ngay_tao' => Carbon::now()->subHours(3),
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+        ];
+
+        foreach ($orders as $orderData) {
+            Order::create($orderData);
         }
-
-        // Tạo 50 đơn hàng với các trạng thái khác nhau
-        Order::factory(10)->pending()->create(['user_id' => $users->random()->id]);
-        Order::factory(15)->processing()->create(['user_id' => $users->random()->id]);
-        Order::factory(12)->shipped()->create(['user_id' => $users->random()->id]);
-        Order::factory(10)->delivered()->create(['user_id' => $users->random()->id]);
-        Order::factory(3)->create([
-            'user_id' => $users->random()->id,
-            'status' => 'cancelled',
-            'payment_status' => 'refunded'
-        ]);
-
-        // Tạo OrderItems cho mỗi đơn hàng
-        Order::all()->each(function ($order) {
-            $itemCount = rand(1, 4); // Mỗi đơn hàng có 1-4 sản phẩm
-            $totalAmount = 0;
-
-            for ($i = 0; $i < $itemCount; $i++) {
-                $product = Product::inRandomOrder()->first();
-                $variant = $product->variants()->inRandomOrder()->first();
-                $quantity = rand(1, 3);
-                $price = $variant ? $variant->price : $product->base_price;
-                $total = $quantity * $price;
-                
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $product->id,
-                    'variant_id' => $variant ? $variant->id : null,
-                    'quantity' => $quantity,
-                    'price' => $price,
-                    'total' => $total,
-                ]);
-
-                $totalAmount += $total;
-            }
-
-            // Cập nhật tổng tiền của đơn hàng
-            $order->update(['total_amount' => $totalAmount]);
-        });
     }
 }
