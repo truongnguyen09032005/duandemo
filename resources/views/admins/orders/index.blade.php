@@ -32,7 +32,7 @@
                         </div>
                     @endif
 
-                   
+                    <!-- Form tìm kiếm cải tiến -->
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <form method="GET" action="{{ route('admin.orders.index') }}" id="searchForm">

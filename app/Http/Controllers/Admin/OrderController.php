@@ -12,23 +12,20 @@ class OrderController extends Controller
     {
         $query = Order::with(['user', 'orderDetails.productVariant.product', 'orderDetails.productVariant.color', 'orderDetails.productVariant.size']);
 
-        // Xử lý tìm kiếm
+        // Thêm tìm kiếm nếu có keyword
         if ($request->filled('keyword')) {
             $keyword = $request->keyword;
-            
             $query->where(function($q) use ($keyword) {
                 $q->where('id', 'like', "%{$keyword}%")
-                  ->orWhere('email', 'like', "%{$keyword}%")  
+                  ->orWhere('email', 'like', "%{$keyword}%")
                   ->orWhere('phone', 'like', "%{$keyword}%")
-                  ->orWhere('address', 'like', "%{$keyword}%")
                   ->orWhereHas('user', function($userQuery) use ($keyword) {
                       $userQuery->where('name', 'like', "%{$keyword}%");
                   });
             });
         }
 
-        // Phân trang và giữ lại query parameters
-        $orders = $query->latest()->paginate(10)->appends($request->query());
+        $orders = $query->latest()->paginate(10);
         
         return view('admins.orders.index', compact('orders'));
     }
@@ -47,9 +44,7 @@ class OrderController extends Controller
 
     public function updateStatus(Request $request, $order)
     {
-        // Debug để kiểm tra data nhận được
-        // dd($request->all());
-        
+        // Sửa validation để match với các giá trị string từ view
         $request->validate([
             'status' => 'required|in:pending,confirmed,processing,shipping,delivered,cancelled,returned'
         ], [
@@ -62,6 +57,7 @@ class OrderController extends Controller
             $order->status = $request->status;
             $order->save();
 
+            // Redirect back để giữ nguyên trang hiện tại
             return redirect()->back()->with('success', 'Cập nhật trạng thái đơn hàng thành công!');
             
         } catch (\Exception $e) {
