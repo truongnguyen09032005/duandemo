@@ -72,43 +72,17 @@
                                 <tr>
                                     <td><strong>Trạng thái:</strong></td>
                                     <td>
-                                        @switch($order->status)
-                                            @case('pending')
-                                                <span class="badge badge-warning">Chờ xử lý</span>
-                                                @break
-                                            @case('confirmed')
-                                                <span class="badge badge-info">Đã xác nhận</span>
-                                                @break
-                                            @case('processing')
-                                                <span class="badge badge-primary">Đang xử lý</span>
-                                                @break
-                                            @case('shipping')
-                                                <span class="badge badge-secondary">Đang giao hàng</span>
-                                                @break
-                                            @case('delivered')
-                                                <span class="badge badge-success">Đã giao</span>
-                                                @break
-                                            @case('cancelled')
-                                                <span class="badge badge-danger">Đã hủy</span>
-                                                @break
-                                            @case('returned')
-                                                <span class="badge badge-dark">Đã trả hàng</span>
-                                                @break
-                                            @default
-                                                <span class="badge badge-secondary">Không xác định</span>
-                                        @endswitch
+                                        <span class="badge {{ $order->status_badge_class }}">
+                                            {{ $order->status_text }}
+                                        </span>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td><strong>Thanh toán:</strong></td>
                                     <td>
-                                        @if($order->payment == 'cod')
-                                            <span class="badge badge-warning">Thanh toán khi nhận hàng</span>
-                                        @elseif($order->payment == 'online')
-                                            <span class="badge badge-info">Thanh toán online</span>
-                                        @else
-                                            <span class="badge badge-secondary">{{ $order->payment }}</span>
-                                        @endif
+                                        <span class="badge {{ $order->payment_badge_class }}">
+                                            {{ $order->payment_text }}
+                                        </span>
                                     </td>
                                 </tr>
                                 @if($order->vorcher_code)
@@ -215,13 +189,13 @@
                                 <div class="form-group">
                                     <label for="status">Trạng thái đơn hàng:</label>
                                     <select name="status" id="status" class="form-control">
-                                        <option value="pending" {{ $order->status == 'pending' ? 'selected' : '' }}>Chờ xử lý</option>
-                                        <option value="confirmed" {{ $order->status == 'confirmed' ? 'selected' : '' }}>Đã xác nhận</option>
-                                        <option value="processing" {{ $order->status == 'processing' ? 'selected' : '' }}>Đang xử lý</option>
-                                        <option value="shipping" {{ $order->status == 'shipping' ? 'selected' : '' }}>Đang giao hàng</option>
-                                        <option value="delivered" {{ $order->status == 'delivered' ? 'selected' : '' }}>Đã giao</option>
-                                        <option value="cancelled" {{ $order->status == 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
-                                        <option value="returned" {{ $order->status == 'returned' ? 'selected' : '' }}>Đã trả hàng</option>
+                                        <option value="0" {{ $order->status == 0 ? 'selected' : '' }}>Chờ xử lý</option>
+                                        <option value="1" {{ $order->status == 1 ? 'selected' : '' }}>Đã xác nhận</option>
+                                        <option value="2" {{ $order->status == 2 ? 'selected' : '' }}>Đang xử lý</option>
+                                        <option value="3" {{ $order->status == 3 ? 'selected' : '' }}>Đang giao hàng</option>
+                                        <option value="4" {{ $order->status == 4 ? 'selected' : '' }}>Đã giao</option>
+                                        <option value="5" {{ $order->status == 5 ? 'selected' : '' }}>Đã hủy</option>
+                                        <option value="6" {{ $order->status == 6 ? 'selected' : '' }}>Đã trả hàng</option>
                                     </select>
                                 </div>
                             </div>

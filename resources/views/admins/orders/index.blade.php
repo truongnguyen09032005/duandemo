@@ -107,31 +107,9 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @switch($order->status)
-                                                @case('pending')
-                                                    <span class="badge badge-warning">Chờ xử lý</span>
-                                                    @break
-                                                @case('confirmed')
-                                                    <span class="badge badge-info">Đã xác nhận</span>
-                                                    @break
-                                                @case('processing')
-                                                    <span class="badge badge-primary">Đang xử lý</span>
-                                                    @break
-                                                @case('shipping')
-                                                    <span class="badge badge-secondary">Đang giao hàng</span>
-                                                    @break
-                                                @case('delivered')
-                                                    <span class="badge badge-success">Đã giao</span>
-                                                    @break
-                                                @case('cancelled')
-                                                    <span class="badge badge-danger">Đã hủy</span>
-                                                    @break
-                                                @case('returned')
-                                                    <span class="badge badge-dark">Đã trả hàng</span>
-                                                    @break
-                                                @default
-                                                    <span class="badge badge-secondary">Không xác định</span>
-                                            @endswitch
+                                            <span class="badge {{ $order->status_badge_class }}">
+                                                {{ $order->status_text }}
+                                            </span>
                                         </td>
                                         <td>{{ $order->created_at ? $order->created_at->format('d/m/Y H:i') : 'N/A' }}</td>
                                         <td>
@@ -151,25 +129,25 @@
                                                         <form method="POST" action="{{ route('admin.orders.updateStatus', $order->id) }}">
                                                             @csrf
                                                             @method('PUT')
-                                                            <button class="dropdown-item" name="status" value="pending" type="submit">
+                                                            <button class="dropdown-item" name="status" value="0" type="submit">
                                                                 <i class="fas fa-clock text-warning"></i> Chờ xử lý
                                                             </button>
-                                                            <button class="dropdown-item" name="status" value="confirmed" type="submit">
+                                                            <button class="dropdown-item" name="status" value="1" type="submit">
                                                                 <i class="fas fa-check text-info"></i> Đã xác nhận
                                                             </button>
-                                                            <button class="dropdown-item" name="status" value="processing" type="submit">
+                                                            <button class="dropdown-item" name="status" value="2" type="submit">
                                                                 <i class="fas fa-cogs text-primary"></i> Đang xử lý
                                                             </button>
-                                                            <button class="dropdown-item" name="status" value="shipping" type="submit">
+                                                            <button class="dropdown-item" name="status" value="3" type="submit">
                                                                 <i class="fas fa-truck text-secondary"></i> Đang giao hàng
                                                             </button>
-                                                            <button class="dropdown-item" name="status" value="delivered" type="submit">
+                                                            <button class="dropdown-item" name="status" value="4" type="submit">
                                                                 <i class="fas fa-check-circle text-success"></i> Đã giao
                                                             </button>
-                                                            <button class="dropdown-item text-danger" name="status" value="cancelled" type="submit">
+                                                            <button class="dropdown-item text-danger" name="status" value="5" type="submit">
                                                                 <i class="fas fa-times text-danger"></i> Hủy đơn
                                                             </button>
-                                                            <button class="dropdown-item" name="status" value="returned" type="submit">
+                                                            <button class="dropdown-item" name="status" value="6" type="submit">
                                                                 <i class="fas fa-undo text-dark"></i> Trả hàng
                                                             </button>
                                                         </form>

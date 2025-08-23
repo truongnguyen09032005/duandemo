@@ -11,30 +11,22 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
-        'email',
-        'phone', 
         'address',
-        'total',
-        'total_amount',
-        'pay_amount',
-        'sale_price',
+        'phone', 
+        'email',
         'status',
         'payment',
-        'payment_status',
-        'payment_method',
-        'shipping_address',
-        'shipping_phone',
-        'shipping_name',
-        'voucher_code', // Sửa từ vorcher_code thành voucher_code
-        'notes'
+        'total',
+        'vorcher_code',
+        'sale_price',
+        'pay_amount'
     ];
 
     protected $casts = [
-        'status' => 'string',
+        'status' => 'integer',
         'total' => 'decimal:2',
-        'total_amount' => 'decimal:2',
-        'pay_amount' => 'decimal:2',
         'sale_price' => 'decimal:2',
+        'pay_amount' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -51,31 +43,19 @@ class Order extends Model
         return $this->hasMany(OrderDetail::class);
     }
 
-    // Quan hệ với Voucher (nếu có)
-    public function voucher()
-    {
-        return $this->belongsTo(Voucher::class, 'voucher_code', 'code');
-    }
-
-    // Các status constants
-    const STATUS_PENDING = 'pending';        // Chờ xử lý
-    const STATUS_CONFIRMED = 'confirmed';    // Đã xác nhận
-    const STATUS_PROCESSING = 'processing';  // Đang xử lý
-    const STATUS_SHIPPING = 'shipping';      // Đang giao hàng
-    const STATUS_DELIVERED = 'delivered';    // Đã giao
-    const STATUS_CANCELLED = 'cancelled';    // Đã hủy
-    const STATUS_RETURNED = 'returned';      // Đã trả hàng
+    // Các status constants - sử dụng integer để match với database
+    const STATUS_PENDING = 0;        // Chờ xử lý
+    const STATUS_CONFIRMED = 1;      // Đã xác nhận
+    const STATUS_PROCESSING = 2;     // Đang xử lý
+    const STATUS_SHIPPING = 3;       // Đang giao hàng
+    const STATUS_DELIVERED = 4;      // Đã giao
+    const STATUS_CANCELLED = 5;      // Đã hủy
+    const STATUS_RETURNED = 6;       // Đã trả hàng
 
     // Payment constants
     const PAYMENT_COD = 'cod';
     const PAYMENT_ONLINE = 'online';
     const PAYMENT_BANK_TRANSFER = 'bank_transfer';
-
-    // Payment status constants
-    const PAYMENT_STATUS_PENDING = 'pending';
-    const PAYMENT_STATUS_PAID = 'paid';
-    const PAYMENT_STATUS_REFUNDED = 'refunded';
-    const PAYMENT_STATUS_FAILED = 'failed';
 
     // Static arrays for dropdown/select options
     public static function getStatusOptions()
@@ -100,16 +80,6 @@ class Order extends Model
         ];
     }
 
-    public static function getPaymentStatusOptions()
-    {
-        return [
-            self::PAYMENT_STATUS_PENDING => 'Chờ thanh toán',
-            self::PAYMENT_STATUS_PAID => 'Đã thanh toán',
-            self::PAYMENT_STATUS_REFUNDED => 'Đã hoàn tiền',
-            self::PAYMENT_STATUS_FAILED => 'Thanh toán thất bại',
-        ];
-    }
-
     // Accessor để hiển thị status
     public function getStatusTextAttribute()
     {
@@ -122,13 +92,6 @@ class Order extends Model
     {
         $payments = self::getPaymentOptions();
         return $payments[$this->payment] ?? ucfirst($this->payment);
-    }
-
-    // Accessor để hiển thị payment status
-    public function getPaymentStatusTextAttribute()
-    {
-        $paymentStatuses = self::getPaymentStatusOptions();
-        return $paymentStatuses[$this->payment_status] ?? 'Không xác định';
     }
 
     // Accessor để hiển thị badge class cho status
@@ -164,23 +127,6 @@ class Order extends Model
                 return 'badge-info';
             case self::PAYMENT_BANK_TRANSFER:
                 return 'badge-primary';
-            default:
-                return 'badge-secondary';
-        }
-    }
-
-    // Accessor để hiển thị badge class cho payment status
-    public function getPaymentStatusBadgeClassAttribute()
-    {
-        switch ($this->payment_status) {
-            case self::PAYMENT_STATUS_PENDING:
-                return 'badge-warning';
-            case self::PAYMENT_STATUS_PAID:
-                return 'badge-success';
-            case self::PAYMENT_STATUS_REFUNDED:
-                return 'badge-info';
-            case self::PAYMENT_STATUS_FAILED:
-                return 'badge-danger';
             default:
                 return 'badge-secondary';
         }
@@ -227,11 +173,6 @@ class Order extends Model
         return $query->where('payment', $method);
     }
 
-    public function scopeByPaymentStatus($query, $status)
-    {
-        return $query->where('payment_status', $status);
-    }
-
     // Helper methods
     public function isPending()
     {
@@ -245,7 +186,7 @@ class Order extends Model
 
     public function isProcessing()
     {
-        return $this->status === self::STATUS_PROCESSING;
+        return $query->where('status', self::STATUS_PROCESSING);
     }
 
     public function isShipping()
@@ -298,12 +239,6 @@ class Order extends Model
         return $this->status === self::STATUS_DELIVERED;
     }
 
-    public function canRefund()
-    {
-        return in_array($this->status, [self::STATUS_DELIVERED, self::STATUS_RETURNED]) 
-            && $this->payment_status === self::PAYMENT_STATUS_PAID;
-    }
-
     // Tính toán tổng số sản phẩm trong đơn hàng
     public function getTotalItemsAttribute()
     {
@@ -338,15 +273,8 @@ class Order extends Model
         parent::boot();
 
         static::creating(function ($order) {
-            // Set default payment status nếu chưa có
-            if (empty($order->payment_status)) {
-                $order->payment_status = $order->payment === self::PAYMENT_COD 
-                    ? self::PAYMENT_STATUS_PENDING 
-                    : self::PAYMENT_STATUS_PENDING;
-            }
-
             // Set default status nếu chưa có
-            if (empty($order->status)) {
+            if (!isset($order->status)) {
                 $order->status = self::STATUS_PENDING;
             }
 

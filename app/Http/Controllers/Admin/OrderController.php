@@ -44,42 +44,23 @@ class OrderController extends Controller
 
     public function updateStatus(Request $request, $order)
     {
-        // Sửa validation để match với các giá trị string từ view
+        // Validation cho integer status
         $request->validate([
-            'status' => 'required|in:pending,confirmed,processing,shipping,delivered,cancelled,returned'
+            'status' => 'required|integer|in:0,1,2,3,4,5,6'
         ], [
             'status.required' => 'Trạng thái là bắt buộc.',
+            'status.integer' => 'Trạng thái phải là số nguyên.',
             'status.in' => 'Trạng thái không hợp lệ.'
         ]);
 
         try {
             $order = Order::findOrFail($order);
-            $order->status = $request->status;
+            $order->status = (int) $request->status;
             $order->save();
 
             // Redirect back để giữ nguyên trang hiện tại
             return redirect()->back()->with('success', 'Cập nhật trạng thái đơn hàng thành công!');
             
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
-        }
-    }
-
-    public function updatePaymentStatus(Request $request, $orderId)
-    {
-        $request->validate([
-            'payment_status' => 'required|in:pending,paid,refunded,failed'
-        ], [
-            'payment_status.required' => 'Trạng thái thanh toán là bắt buộc.',
-            'payment_status.in' => 'Trạng thái thanh toán không hợp lệ.'
-        ]);
-
-        try {
-            $order = Order::findOrFail($orderId);
-            $order->payment_status = $request->payment_status;
-            $order->save();
-            
-            return redirect()->back()->with('success', 'Cập nhật trạng thái thanh toán thành công!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
         }
